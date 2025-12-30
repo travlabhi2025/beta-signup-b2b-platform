@@ -18,6 +18,18 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Google Sheets Integration
+
+This project supports automatically saving signup form submissions to Google Sheets. See [GOOGLE_SHEETS_SETUP.md](./GOOGLE_SHEETS_SETUP.md) for detailed setup instructions.
+
+**Quick Setup:**
+1. Create a Google Sheet with the required column headers
+2. Create a Google Apps Script web app
+3. Add `NEXT_PUBLIC_GOOGLE_SHEETS_WEB_APP_URL` to your `.env.local` file
+4. Restart your development server
+
+The integration is optional - signups will still work without it, but data won't be saved to Google Sheets.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
