@@ -184,6 +184,36 @@ export default function SignupForm() {
     }
   };
 
+  // Function to send welcome email via Resend
+  const sendWelcomeEmail = async (data: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  }) => {
+    try {
+      const response = await fetch("/api/send-welcome-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to send welcome email");
+      }
+
+      const result = await response.json();
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to send welcome email");
+      }
+    } catch (fetchError) {
+      throw fetchError;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setSubmitError(null);
@@ -329,6 +359,17 @@ export default function SignupForm() {
         });
       } catch {
         // Don't fail the signup if Google Sheets fails
+      }
+
+      // Send welcome email (non-blocking - don't fail signup if this fails)
+      try {
+        await sendWelcomeEmail({
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
+        });
+      } catch {
+        // Don't fail the signup if email sending fails
       }
 
       // Reset form
