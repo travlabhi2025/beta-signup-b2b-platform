@@ -23,6 +23,12 @@ export default function Header() {
         {pathname === "/" && (
           <div className="flex items-center gap-4">
             <Link
+              href="/verify-email"
+              className="hidden sm:flex items-center justify-center rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-brand-dark px-5 py-2 text-sm font-bold transition-all"
+            >
+              Verify Email
+            </Link>
+            <Link
               href="/signup"
               className="flex items-center justify-center rounded-lg bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-[#0b9c8d] transition-all shadow-lg shadow-primary/25"
             >

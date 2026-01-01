@@ -159,6 +159,7 @@ export default function SignupForm() {
     companyName: string;
     tripsPerYear: string;
     userId: string;
+    emailVerified: boolean;
   }) => {
     try {
       const response = await fetch("/api/google-sheets", {
@@ -356,20 +357,27 @@ export default function SignupForm() {
           companyName: companyName.trim(),
           tripsPerYear: getTripsText(tripsValue),
           userId: user.uid,
+          emailVerified: false, // Initially false, will be updated after verification
         });
       } catch {
         // Don't fail the signup if Google Sheets fails
       }
 
-      // Send welcome email (non-blocking - don't fail signup if this fails)
+      // Send signup email (non-blocking - don't fail signup if this fails)
       try {
-        await sendWelcomeEmail({
-          firstName: firstName.trim(),
-          lastName: lastName.trim(),
-          email: email.trim(),
+        await fetch("/api/send-signup-email", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: email.trim(),
+            firstName: firstName.trim(),
+            lastName: lastName.trim(),
+          }),
         });
       } catch {
-        // Don't fail the signup if email sending fails
+        // Don't fail signup if email sending fails
       }
 
       // Reset form

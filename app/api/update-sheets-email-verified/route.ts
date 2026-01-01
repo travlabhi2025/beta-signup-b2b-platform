@@ -8,17 +8,9 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Validate required fields
-    if (
-      !data.firstName ||
-      !data.lastName ||
-      !data.email ||
-      !data.phoneNumber ||
-      !data.companyName ||
-      !data.tripsPerYear ||
-      !data.userId
-    ) {
+    if (!data.userId || !data.email || data.emailVerified === undefined) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: userId, email, and emailVerified" },
         { status: 400 }
       );
     }
@@ -27,26 +19,16 @@ export async function POST(request: NextRequest) {
     if (GOOGLE_SCRIPT_URL) {
       try {
         const payload: {
-          firstName: string;
-          lastName: string;
-          email: string;
-          phoneNumber: string;
-          companyName: string;
-          tripsPerYear: string;
           userId: string;
+          email: string;
           emailVerified: boolean;
-          action?: string;
+          action: "updateEmailVerified";
           token?: string;
         } = {
-          firstName: data.firstName,
-          lastName: data.lastName,
-          email: data.email,
-          phoneNumber: data.phoneNumber,
-          companyName: data.companyName,
-          tripsPerYear: data.tripsPerYear,
           userId: data.userId,
-          emailVerified: data.emailVerified ?? false, // Default to false for new signups
-          action: "create", // Indicate this is a new signup
+          email: data.email,
+          emailVerified: data.emailVerified,
+          action: "updateEmailVerified",
         };
 
         // Add token if configured (optional security)
@@ -65,6 +47,12 @@ export async function POST(request: NextRequest) {
         const responseText = await response.text();
 
         if (!response.ok) {
+          console.error("Google Sheets API error:", {
+            status: response.status,
+            statusText: response.statusText,
+            responseText,
+            payload: { ...payload, token: payload.token ? "***" : undefined },
+          });
           return NextResponse.json(
             {
               success: false,
@@ -78,18 +66,29 @@ export async function POST(request: NextRequest) {
         try {
           result = JSON.parse(responseText);
         } catch {
+          console.warn("Failed to parse Google Sheets response as JSON:", responseText);
           result = { success: true, message: responseText };
         }
 
         if (!result.success) {
+          console.error("Google Sheets update failed:", {
+            error: result.error,
+            payload: { ...payload, token: payload.token ? "***" : undefined },
+          });
           return NextResponse.json(
             {
               success: false,
-              error: result.error || "Failed to save to Google Sheets",
+              error: result.error || "Failed to update Google Sheets",
             },
             { status: 500 }
           );
         }
+
+        console.log("Google Sheets updated successfully:", {
+          userId: data.userId,
+          email: data.email,
+          emailVerified: data.emailVerified,
+        });
 
         return NextResponse.json({ success: true });
       } catch (error) {
@@ -99,7 +98,7 @@ export async function POST(request: NextRequest) {
             error:
               error instanceof Error
                 ? error.message
-                : "Failed to send to Google Sheets",
+                : "Failed to update Google Sheets",
           },
           { status: 500 }
         );

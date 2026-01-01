@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     // Validate required fields
     if (!data.email || !data.firstName || !data.lastName) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: email, firstName, and lastName" },
         { status: 400 }
       );
     }
@@ -22,12 +22,16 @@ export async function POST(request: NextRequest) {
     }
 
     const fullName = `${data.firstName} ${data.lastName}`.trim();
+    const verifyEmailUrl =
+      process.env.NEXT_PUBLIC_APP_URL ||
+      request.headers.get("origin") ||
+      "https://b2b.tripabhi.in";
 
     try {
       await resend.emails.send({
         from: "TripAbhi <noreply@hi.travlabhi.com>",
         to: data.email,
-        subject: "Welcome to TripAbhi Organizer Beta!",
+        subject: "Welcome to TripAbhi Organizer Beta - Verify Your Email",
         html: `
           <!DOCTYPE html>
           <html>
@@ -37,21 +41,39 @@ export async function POST(request: NextRequest) {
             </head>
             <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #112838; max-width: 600px; margin: 0 auto; padding: 20px;">
               <div style="background-color: #f6f8f8; padding: 40px 20px; border-radius: 8px;">
-                <h1 style="color: #0daf9f; font-size: 28px; margin-bottom: 20px;">🎉 Email Verified - Welcome to TripAbhi Organizer Beta!</h1>
+                <h1 style="color: #0daf9f; font-size: 28px; margin-bottom: 20px;">Welcome to TripAbhi Organizer Beta!</h1>
                 
                 <p style="font-size: 16px; margin-bottom: 16px;">Hi ${fullName},</p>
                 
                 <p style="font-size: 16px; margin-bottom: 16px;">
-                  Congratulations! Your email has been successfully verified. Thank you for joining the TripAbhi Organizer Beta program! We're excited to have you join our community of travel professionals.
+                  Thank you for signing up for the TripAbhi Organizer Beta program! We're excited to have you join our community of travel professionals.
                 </p>
                 
-                <p style="font-size: 16px; margin-bottom: 16px;">
-                  We're currently reviewing applications to ensure the best experience for our beta partners. Here's what happens next:
-                </p>
+                <div style="background-color: white; padding: 24px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #0daf9f;">
+                  <h2 style="color: #112838; font-size: 20px; margin-bottom: 12px; margin-top: 0;">🚀 You're One Step Closer to Beta Access</h2>
+                  <p style="font-size: 16px; margin-bottom: 16px; color: #112838;">
+                    Verifying your email address gets you one step closer to accessing the beta platform. This helps us ensure the best experience for our beta partners and maintain platform security.
+                  </p>
+                  <p style="font-size: 16px; margin-bottom: 0; color: #112838;">
+                    Once verified, you'll be able to access all beta features and start managing your travel operations with ease.
+                  </p>
+                </div>
+                
+                <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 24px 0; text-align: center;">
+                  <p style="font-size: 14px; color: #666; margin-bottom: 12px;">
+                    Ready to verify your email?
+                  </p>
+                  <a href="${verifyEmailUrl}/verify-email" style="display: inline-block; background-color: #0daf9f; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px;">
+                    Verify Your Email
+                  </a>
+                </div>
                 
                 <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 24px 0;">
-                  <h2 style="color: #112838; font-size: 20px; margin-bottom: 16px;">What's Next:</h2>
+                  <h2 style="color: #112838; font-size: 20px; margin-bottom: 16px; margin-top: 0;">What Happens Next:</h2>
                   <ol style="padding-left: 20px; margin: 0;">
+                    <li style="margin-bottom: 12px;">
+                      <strong>Verify Your Email:</strong> Click the button above to sign in and verify your email address.
+                    </li>
                     <li style="margin-bottom: 12px;">
                       <strong>Application Review:</strong> We'll manually check your travel organization profile to match you with the right beta cohort tailored to your niche.
                     </li>
@@ -100,3 +122,4 @@ export async function POST(request: NextRequest) {
     );
   }
 }
+

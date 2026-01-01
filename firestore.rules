@@ -1,0 +1,64 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Users collection - users can read/update their own document
+    match /users/{userId} {
+      // Users can read their own document
+      allow read: if isOwner(userId);
+      
+      // Users can create their own document (during signup)
+      allow create: if isOwner(userId) && 
+                     request.resource.data.keys().hasAll(['name', 'email', 'emailVerified', 'role', 'createdAt', 'updatedAt']);
+      
+      // Users can update their own document, but only specific fields
+      allow update: if isOwner(userId) && 
+                     // Can only update emailVerified and updatedAt
+                     (!('name' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                      request.resource.data.name == resource.data.name) &&
+                     (!('email' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                      request.resource.data.email == resource.data.email) &&
+                     (!('role' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                      request.resource.data.role == resource.data.role) &&
+                     (!('createdAt' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                      request.resource.data.createdAt == resource.data.createdAt);
+    }
+    
+    // OTPs collection - users can create/read/update/delete their own OTP document
+    match /otps/{userId} {
+      // Users can read their own OTP document
+      allow read: if isOwner(userId);
+      
+      // Users can create their own OTP document
+      allow create: if isOwner(userId) && 
+                     request.resource.data.keys().hasAll(['email', 'otp', 'expiresAt', 'createdAt', 'verified']) &&
+                     request.resource.data.email is string &&
+                     request.resource.data.otp is string &&
+                     request.resource.data.verified == false;
+      
+      // Users can update their own OTP document (for resending OTP or marking as verified)
+      allow update: if isOwner(userId) && 
+                     // Email cannot be changed, but other fields (otp, expiresAt, createdAt, lastResendAt, verified) can be updated
+                     (!('email' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                      request.resource.data.email == resource.data.email);
+      
+      // Users can delete their own OTP document
+      allow delete: if isOwner(userId);
+    }
+    
+    // Deny all other access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
